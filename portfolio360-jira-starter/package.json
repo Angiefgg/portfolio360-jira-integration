@@ -1,0 +1,15 @@
+{
+  "name": "portfolio360-jira-starter",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A configurable IT portfolio dashboard starter with Jira Cloud integration.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
