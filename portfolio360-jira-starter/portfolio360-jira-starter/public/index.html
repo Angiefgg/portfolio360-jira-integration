@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portfolio360 | IT Portfolio Intelligence</title>
+<style>
+:root{--bg:#f4f6fb;--panel:#fff;--ink:#182235;--muted:#667085;--line:#e5eaf1;--blue:#4563eb;--green:#16845b;--amber:#b7791f;--red:#c2413b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,Arial,sans-serif}.wrap{max-width:1280px;margin:auto;padding:28px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:22px}.eyebrow{font-size:11px;color:var(--blue);font-weight:800;letter-spacing:.1em;text-transform:uppercase}h1{font-size:30px;margin:5px 0}.muted{color:var(--muted)}.source{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:12px}
+.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(5,1fr);margin-bottom:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px;box-shadow:0 4px 16px #18223508}.label{font-size:12px;color:var(--muted)}.value{font-size:28px;font-weight:800;margin:5px 0}.charts{grid-template-columns:1fr 1.4fr;margin-bottom:16px}.chart{min-height:235px}.piebox{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.pie{width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--green) 0 40%,var(--amber) 40% 75%,var(--red) 75% 100%);position:relative}.pie:after{content:"";position:absolute;inset:35px;border-radius:50%;background:#fff}.legend{display:grid;gap:10px;font-size:12px}.swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}.bars{display:grid;gap:12px;margin-top:16px}.barrow{display:grid;grid-template-columns:130px 1fr 35px;gap:9px;align-items:center;font-size:12px}.track{height:10px;background:#edf0f5;border-radius:20px;overflow:hidden}.fill{height:100%;background:var(--blue);border-radius:20px}.tablecard{padding:0;overflow:hidden}.tablehead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.tablehead h2{margin:0;font-size:16px}input,select{border:1px solid var(--line);padding:8px 10px;border-radius:8px;background:white}table{border-collapse:collapse;width:100%;min-width:760px}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #edf0f5;font-size:12px}th{font-size:10px;color:var(--muted);text-transform:uppercase}tbody tr:hover{background:#fafbff}.pill{padding:4px 8px;border-radius:20px;font-size:10px;font-weight:750}.ok{background:#e7f6ef;color:var(--green)}.warn{background:#fff3d8;color:var(--amber)}.bad{background:#ffebe9;color:var(--red)}.error{background:#fff0ef;color:var(--red);padding:12px;border-radius:9px;margin:12px 0;display:none}.foot{font-size:10px;color:var(--muted);text-align:center;margin:18px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}.charts{grid-template-columns:1fr}}@media(max-width:600px){.wrap{padding:15px}.kpis{grid-template-columns:repeat(2,1fr)}header{display:block}.source{display:inline-block;margin-top:10px}}
+</style></head><body><div class="wrap">
+<header><div><div class="eyebrow">IT Portfolio Intelligence & Governance</div><h1>Portfolio360</h1><div class="muted">A configurable portfolio overview powered by Jira Cloud or sample data.</div></div><div class="source" id="source">Loading data…</div></header>
+<div id="error" class="error"></div>
+<section class="grid kpis" id="kpis"></section>
+<section class="grid charts">
+ <article class="card chart"><h2>Work item status</h2><div class="piebox"><div class="pie" id="pie"></div><div class="legend" id="legend"></div></div><div class="muted" style="font-size:10px;margin-top:12px">Status distribution across returned Jira work items.</div></article>
+ <article class="card chart"><h2>Work items by project</h2><div class="bars" id="projectBars"></div><div class="muted" style="font-size:10px;margin-top:12px">Count of matching work items grouped by Jira project.</div></article>
+</section>
+<section class="card tablecard"><div class="tablehead"><h2>Portfolio work items</h2><div><input id="search" placeholder="Search…" aria-label="Search"><select id="status"><option value="">All statuses</option></select></div></div><div style="overflow-x:auto"><table><thead><tr><th>Key</th><th>Project</th><th>Work item</th><th>Owner</th><th>Status</th><th>Priority</th><th>Due date</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<div class="foot">Portfolio360 starter · Use approved Jira projects and credentials only. Metrics are illustrative and depend on the configured JQL.</div>
+</div>
+<script>
+let data=null;
+const $=s=>document.querySelector(s);
+function render(){
+ const s=data.summary, items=data.items;
+ const cards=[["Work items",s.totalItems],["Active",s.activeItems],["Completed",s.completedItems],["Overdue",s.overdueItems],["Completion rate",s.completionRate+"%"]];
+ $("#kpis").innerHTML=cards.map(x=>`<article class="card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></article>`).join("");
+ const entries=Object.entries(s.statusCounts), total=items.length||1;let cursor=0;
+ const palette=["#16845b","#e5a32c","#4563eb","#c2413b","#8b5cf6","#0891b2","#64748b"];
+ const stops=entries.map(([name,n],i)=>{const start=cursor;cursor+=n/total*100;return `${palette[i%palette.length]} ${start}% ${cursor}%`;});
+ $("#pie").style.background=entries.length?`conic-gradient(${stops.join(",")})`:"#e5eaf1";
+ $("#legend").innerHTML=entries.map(([name,n],i)=>`<div><i class="swatch" style="background:${palette[i%palette.length]}"></i>${name}: <b>${n}</b> (${Math.round(n/total*100)}%)</div>`).join("")||"No data";
+ const projects=Object.entries(s.projectCounts).sort((a,b)=>b[1]-a[1]);const max=Math.max(1,...projects.map(x=>x[1]));
+ $("#projectBars").innerHTML=projects.map(([name,n])=>`<div class="barrow"><span title="${name}">${name}</span><div class="track"><div class="fill" style="width:${n/max*100}%"></div></div><b>${n}</b></div>`).join("")||"No data";
+ const statuses=[...new Set(items.map(x=>x.status))];$("#status").innerHTML='<option value="">All statuses</option>'+statuses.map(x=>`<option>${x}</option>`).join("");
+ renderRows();
+}
+function renderRows(){
+ const q=$("#search").value.toLowerCase(),status=$("#status").value;
+ const filtered=data.items.filter(x=>(`${x.key} ${x.project} ${x.summary} ${x.assignee}`.toLowerCase().includes(q))&&(!status||x.status===status));
+ $("#rows").innerHTML=filtered.map(x=>{const cls=/block|imped/i.test(x.status)?"bad":/done|closed|resolved/i.test(x.status)?"ok":"warn";return `<tr><td><b>${x.key}</b></td><td>${x.project}</td><td>${x.summary}</td><td>${x.assignee}</td><td><span class="pill ${cls}">${x.status}</span></td><td>${x.priority}</td><td>${x.dueDate||"—"}</td></tr>`}).join("")||'<tr><td colspan="7">No matching work items.</td></tr>';
+}
+async function load(){
+ try{const r=await fetch("/api/portfolio");const body=await r.json();if(!r.ok)throw new Error(body.error||"Unable to load portfolio data.");data=body;$("#source").textContent=`Source: ${body.source.toUpperCase()} · Updated ${new Date(body.refreshedAt).toLocaleString()}`;$("#error").style.display="none";render();}
+ catch(e){$("#error").textContent=e.message;$("#error").style.display="block";$("#source").textContent="Data unavailable";}
+}
+$("#search").addEventListener("input",()=>data&&renderRows());$("#status").addEventListener("change",()=>data&&renderRows());load();
+</script></body></html>
